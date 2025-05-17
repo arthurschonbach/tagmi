@@ -18,7 +18,9 @@ class GroupCreateView(LoginRequiredMixin, CreateView):
     model = Group
     form_class = GroupForm
     template_name = 'core/create_group.html'
-    success_url = reverse_lazy('group_list') # Redirect to group list after creation
+
+    def get_success_url(self):
+        return reverse_lazy('group_list') # Return URL string for redirect after creation
 
     def form_valid(self, form):
         form.instance.created_by = self.request.user
