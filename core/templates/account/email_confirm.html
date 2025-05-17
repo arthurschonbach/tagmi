@@ -1,5 +1,6 @@
-{% raw %}{% extends "core/base.html" %}
+{% extends "core/base.html" %}
 {% load i18n %}
+{% load account %} {# for user_display tag #}
 
 {% block title %}{% translate "Confirm E-mail Address" %}{% endblock %}
 
@@ -29,4 +30,4 @@
     <p class="text-red-700">{% blocktranslate %}This e-mail confirmation link expired or is invalid. Please <a href="{{ email_url }}" class="text-indigo-600 hover:underline">issue a new e-mail confirmation request</a>.{% endblocktranslate %}</p>
   {% endif %}
 </div>
-{% endblock %}{% endraw %}
+{% endblock %}

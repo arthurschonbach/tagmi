@@ -1,25 +1,12 @@
-{% raw %}{% extends "core/base.html" %}
+{% extends "core/base.html" %}
 {% load i18n %}
-{% load account socialaccount %}
+{% load account %}
 
 {% block title %}{% translate "Log In" %}{% endblock %}
 
 {% block content %}
 <div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-lg">
   <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">{% translate "Log In" %}</h1>
-
-  {% if socialaccount_providers %}
-    <p class="text-center text-gray-600 mb-4">{% blocktranslate %}Or sign in with one of these services:{% endblocktranslate %}</p>
-    <div class="flex flex-col space-y-2 mb-6">
-        {% include "socialaccount/snippets/provider_list.html" with process="login" %}
-    </div>
-    {% include "socialaccount/snippets/login_extra.html" %}
-    <div class="my-6 flex items-center">
-        <div class="flex-grow border-t border-gray-300"></div>
-        <span class="flex-shrink mx-4 text-gray-500 text-sm">{% translate "Or" %}</span>
-        <div class="flex-grow border-t border-gray-300"></div>
-    </div>
-  {% endif %}
 
   <form method="POST" action="{% url 'account_login' %}" class="space-y-6">
     {% csrf_token %}
@@ -82,4 +69,4 @@
     <a href="{{ signup_url }}" class="font-medium text-indigo-600 hover:text-indigo-500">{% translate "Sign Up" %}</a>
   </p>
 </div>
-{% endblock %}{% endraw %}
+{% endblock %}

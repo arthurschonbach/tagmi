@@ -1,5 +1,6 @@
-{% raw %}{% extends "core/base.html" %}
+{% extends "core/base.html" %}
 {% load i18n %}
+{% load account %} {# For forms and other potential allauth tags #}
 
 {% block title %}{% translate "Manage E-mail Addresses" %}{% endblock %}
 
@@ -87,4 +88,4 @@
         </button>
     </form>
 </div>
-{% endblock %}{% endraw %}
+{% endblock %}
