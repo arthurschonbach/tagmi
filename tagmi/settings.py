@@ -104,9 +104,6 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # or your configured directory
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 ACCOUNT_EMAIL_VERIFICATION = "none"
@@ -119,11 +116,15 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 INSTALLED_APPS += ['cloudinary', 'cloudinary_storage']
 
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+if DEBUG:
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+else:
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.environ['CLOUDINARY_CLOUD_NAME'],
-    'API_KEY': os.environ['CLOUDINARY_API_KEY'],
-    'API_SECRET': os.environ['CLOUDINARY_API_SECRET'],
-}
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': os.environ['CLOUDINARY_CLOUD_NAME'],
+        'API_KEY': os.environ['CLOUDINARY_API_KEY'],
+        'API_SECRET': os.environ['CLOUDINARY_API_SECRET'],
+    }
 
