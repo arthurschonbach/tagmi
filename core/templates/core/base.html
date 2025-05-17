@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tagmi</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.10" integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC" crossorigin="anonymous"></script>
+  <style>
+    body {
+        font-family: sans-serif; /* A default Tailwind font stack will apply */
+    }
+    /* Custom styles for Django messages are no longer needed here if _messages.html handles it with Tailwind */
+
+    /* Toast container styles */
+    #messages-container {
+      position: fixed;
+      top: 1rem; /* Adjust as needed */
+      right: 1rem; /* Adjust as needed, or use left/center */
+      z-index: 9999;
+      width: 350px; /* Or max-width, adjust as needed */
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem; /* Spacing between toasts */
+    }
+
+    /* Toast visible state */
+    .toast-message.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+  <header class="bg-white shadow-md">
+    <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
+      <a href="{% url 'home' %}" class="text-2xl font-bold text-indigo-600 hover:text-indigo-800">Tagmi</a>
+      <div>
+        {% if user.is_authenticated %}
+          <span class="text-gray-700 mr-4">Logged in as <strong class="font-semibold">{{ user.username }}</strong></span>
+          <a href="{% url 'account_logout' %}" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition duration-150">Logout</a>
+        {% else %}
+          <a href="{% url 'account_login' %}" class="px-4 py-2 text-indigo-600 hover:text-indigo-800 transition duration-150">Log in</a>
+          <a href="{% url 'account_signup' %}" class="ml-2 px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition duration-150">Sign up</a>
+        {% endif %}
+      </div>
+    </nav>
+  </header>
+
+  <!-- Messages Container - This is where toasts will live -->
+  <div id="messages-container">
+    {% comment %}
+      Messages will be injected here by HTMX OOB swap
+      or on initial page load by Django template rendering.
+      We include it here for initial page loads.
+    {% endcomment %}
+    {% include "core/partials/_messages.html" %}
+  </div>
+
+  <main id="main-content-area" class="container mx-auto px-4 py-8">
+    {# Main content area no longer needs a separate message container #}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="text-center py-4 mt-8 text-gray-600 text-sm">
+    <p>© {% now "Y" %} Tagmi. All rights reserved.</p>
+  </footer>
+
+  {% if media %}
+    {{ media }}
+  {% endif %}
+
+  <script>
+    function showAndDismissToasts() {
+      const toasts = document.querySelectorAll('#messages-container .toast-message:not(.show)');
+      toasts.forEach((toast, index) => {
+        // Stagger the appearance slightly if multiple toasts appear at once
+        setTimeout(() => {
+          toast.classList.add('show');
+        }, index * 100); // 100ms delay between each new toast
+
+        // Set timeout to remove the toast
+        setTimeout(() => {
+          toast.classList.remove('show'); // Start fade out
+          // Remove from DOM after fade out transition (300ms)
+          setTimeout(() => {
+            toast.remove();
+          }, 300); // Must match CSS transition duration
+        }, 5000 + (index * 100)); // Show for 5 seconds + stagger
+      });
+    }
+
+    // Initial call for messages present on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      showAndDismissToasts();
+    });
+
+    // Listen for HTMX afterSettle event to process new toasts from OOB swaps
+    // Use document.body to catch events from any HTMX interaction
+    document.body.addEventListener('htmx:afterSettle', function(event) {
+      // Check if the messages-container was part of the swap
+      // (or simply run it if you expect messages might appear)
+      if (event.detail.target.id === 'messages-container' || event.detail.xhr.getResponseHeader('HX-Trigger-After-Settle')?.includes('new_message_event_from_server')) {
+        // The above HX-Trigger check is an example if you wanted more fine-grained control from server
+        // For your case, checking if new toasts exist in the container after any OOB swap is simpler:
+        showAndDismissToasts();
+      } else {
+        // Even simpler: If any part of the response targeted the messages-container, or if you're unsure, just run it.
+        // This ensures that if the messages-container is swapped, toasts are processed.
+        const messageContainer = document.getElementById('messages-container');
+        if (messageContainer && messageContainer.querySelector('.toast-message:not(.show)')) {
+            showAndDismissToasts();
+        }
+      }
+    });
+
+    // More robust HTMX event listener to ensure toasts are handled after OOB swaps
+    // targeting #messages-container.
+    htmx.onLoad(function(elt) {
+        // This function is called after htmx has processed a new piece of content.
+        // 'elt' is the new content that was loaded.
+        // If the messages-container itself was swapped, 'elt' would be #messages-container.
+        // If content *inside* #messages-container was swapped (less likely with outerHTML),
+        // we might need to check elt.querySelectorAll.
+        // For your OOB swap of #messages-container:outerHTML, elt will be the new #messages-container.
+        if (elt.id === 'messages-container' || elt.querySelector('#messages-container .toast-message:not(.show)')) {
+            showAndDismissToasts();
+        }
+        // If you only care about messages that are children of the swapped element directly
+        // and the swapped element is messages-container
+        else if (elt.matches && elt.matches('#messages-container')) {
+            // Check children of elt (the new messages-container)
+            const childToasts = elt.querySelectorAll('.toast-message:not(.show)');
+            if (childToasts.length > 0) {
+                showAndDismissToasts(); // This will re-query the whole document, which is fine.
+            }
+        }
+    });
+
+  </script>
+</body>
+</html>

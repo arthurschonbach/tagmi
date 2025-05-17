@@ -1,0 +1,20 @@
+{% load i18n %}
+<li id="group-tag-pill-{{ tag.id }}" class="inline-flex items-center bg-gray-200 text-gray-700 text-sm font-medium px-3 py-1 rounded-full mr-2 mb-2">
+  <span>{{ tag.name }}</span>
+  <form method="post"
+        action="{% url 'remove_group_tag' group_pk=group.id tag_pk=tag.id %}"
+        style="display:inline;"
+        hx-post="{% url 'remove_group_tag' group_pk=group.id tag_pk=tag.id %}"
+        hx-target="#group-tags-section"
+        hx-select="#group-tags-section"
+        hx-swap="outerHTML"
+        hx-select-oob="#messages-container:outerHTML"
+        hx-confirm="{% blocktranslate with tag_name=tag.name %}Are you sure you want to remove the group tag '{{ tag_name }}'? This will remove it from all photos in this group.{% endblocktranslate %}">
+    {% csrf_token %}
+    <button type="submit" class="ml-2 text-red-500 hover:text-red-700 focus:outline-none" title="{% translate 'Remove group tag' %}">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+  </form>
+</li>

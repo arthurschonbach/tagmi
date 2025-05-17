@@ -1,0 +1,56 @@
+{% extends "core/base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-lg">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">{% translate "Upload Photos" %}</h1>
+
+    {# Messages will be handled by #messages-container in base.html #}
+    {# If this page re-renders due to an error in handleMultipleImagesUpload without a redirect, #}
+    {# Django messages set in that view will populate #messages-container. #}
+
+    {% if error %} {# Specific 'error' variable from context, distinct from Django messages #}
+    <div class="mb-4 p-3 bg-red-100 text-red-700 border border-red-300 rounded-md">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="POST" enctype="multipart/form-data" action="{% url 'upload_photo' %}" class="space-y-6">
+        {% csrf_token %}
+
+        <div>
+            <label for="images" class="block text-sm font-medium text-gray-700">{% translate "Select Images (one or more):" %}</label>
+            <input type="file" name="images" id="images" multiple required
+                   class="mt-1 block w-full text-sm text-gray-500
+                          file:mr-4 file:py-2 file:px-4
+                          file:rounded-full file:border-0
+                          file:text-sm file:font-semibold
+                          file:bg-indigo-50 file:text-indigo-700
+                          hover:file:bg-indigo-100">
+        </div>
+
+        {% if groups %}
+        <fieldset>
+            <legend class="text-sm font-medium text-gray-700">{% translate "Select Groups:" %}</legend>
+            <div class="mt-2 space-y-2 max-h-60 overflow-y-auto p-2 border rounded-md">
+                {% for group in groups %}
+                <div class="flex items-center">
+                    <input class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                           type="checkbox" name="groups" id="group_{{ group.id }}" value="{{ group.id }}">
+                    <label class="ml-2 block text-sm text-gray-900" for="group_{{ group.id }}">{{ group.name }}</label>
+                </div>
+                {% endfor %}
+            </div>
+        </fieldset>
+        {% else %}
+            <p class="text-gray-600">{% translate "You are not a member of any groups. Please join or create a group to upload photos." %}</p>
+        {% endif %}
+
+        {% if groups %}
+        <button type="submit" class="w-full px-6 py-3 bg-green-500 text-white font-semibold rounded-lg shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75 transition duration-150">
+            {% translate "Upload" %}
+        </button>
+        {% endif %}
+    </form>
+</div>
+{% endblock %}
