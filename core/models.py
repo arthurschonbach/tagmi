@@ -25,7 +25,10 @@ class Group(models.Model):
         verbose_name_plural = _("groups")
 
 class Photo(models.Model):
-    image = models.ImageField(_("image"), upload_to="photos/%Y/%m/%d/")
+    # In production, use CloudinaryField for image storage
+    from cloudinary.models import CloudinaryField
+    image = CloudinaryField('image')
+    # image = models.ImageField(_("image"), upload_to="photos/%Y/%m/%d/")
     uploaded_by = models.ForeignKey(
         User,
         verbose_name=_("uploader"),
