@@ -1,46 +1,40 @@
 {% extends 'core/base.html' %}
 {% load i18n %}
-
-{% block title %}{{ group.name }} - {% translate "Group Details" %}{% endblock %}
-
+{% block title %}
+    {{ group.name }} - {% translate "Group Details" %}
+{% endblock %}
 {% block content %}
-<div class="container mx-auto px-2 py-6 sm:px-4 sm:py-8">
-    {# messages-container is in base.html and will be populated by HTMX oob_select or on full page loads #}
-
-    <div class="mb-8 text-center sm:text-left">
-        <h1 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-1">{{ group.name }}</h1>
-        <p class="text-sm text-gray-600">
-            {% blocktranslate with username=group.created_by.username %}Created by: <strong class="font-normal">{{ username }}</strong>{% endblocktranslate %}
-        </p>
-        {% if group.description %}
-            <p class="mt-2 text-gray-700 text-sm sm:text-base">{{ group.description }}</p>
-        {% endif %}
+    <div class="container mx-auto px-2 py-6 sm:px-4 sm:py-8">
+        {# messages-container is in base.html and will be populated by HTMX oob_select or on full page loads #}
+        <div class="mb-8 text-center sm:text-left">
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-1">{{ group.name }}</h1>
+            <p class="text-sm text-gray-600">
+                {% blocktranslate with username=group.created_by.username %}Created by: <strong class="font-normal">{{ username }}</strong>{% endblocktranslate %}
+            </p>
+            {% if group.description %}<p class="mt-2 text-gray-700 text-sm sm:text-base">{{ group.description }}</p>{% endif %}
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <aside class="lg:col-span-4 xl:col-span-3 space-y-6">
+                {# Group Members Section #}
+                <section id="group-members" class="bg-white p-4 sm:p-5 rounded-lg shadow-md">
+                    {% include "core/partials/_group_members_list.html" with group=group %}
+                </section>
+                {# Manage Group Tags Section #}
+                <section id="group-tags-section"
+                         class="bg-white p-4 sm:p-5 rounded-lg shadow-md">
+                    {% include "core/partials/_manage_group_tags.html" with group=group %}
+                </section>
+                {# Potentially other sidebar content here, e.g., Group Settings link if applicable #}
+            </aside>
+            <main class="lg:col-span-8 xl:col-span-9">
+                {# Group Photos Section #}
+                <section id="group-photos-section"
+                         class="bg-white p-4 sm:p-5 rounded-lg shadow-md">
+                    {% include "core/partials/_group_photos.html" with group=group filter_form=filter_form photo_details_list=photo_details_list %}
+                    {# The _group_photos.html template will iterate and include _photo_card.html, #}
+                    {# which now has the hover-zoom effect. #}
+                </section>
+            </main>
+        </div>
     </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-        <aside class="lg:col-span-4 xl:col-span-3 space-y-6">
-            {# Group Members Section #}
-            <section id="group-members" class="bg-white p-4 sm:p-5 rounded-lg shadow-md">
-                {% include "core/partials/_group_members_list.html" with group=group %}
-            </section>
-
-            {# Manage Group Tags Section #}
-            <section id="group-tags-section" class="bg-white p-4 sm:p-5 rounded-lg shadow-md">
-                {% include "core/partials/_manage_group_tags.html" with group=group %}
-            </section>
-
-            {# Potentially other sidebar content here, e.g., Group Settings link if applicable #}
-        </aside>
-
-        <main class="lg:col-span-8 xl:col-span-9">
-            {# Group Photos Section #}
-            <section id="group-photos-section" class="bg-white p-4 sm:p-5 rounded-lg shadow-md">
-                {% include "core/partials/_group_photos.html" with group=group filter_form=filter_form photo_details_list=photo_details_list %}
-                {# The _group_photos.html template will iterate and include _photo_card.html, #}
-                {# which now has the hover-zoom effect. #}
-            </section>
-        </main>
-    </div>
-</div>
 {% endblock %}

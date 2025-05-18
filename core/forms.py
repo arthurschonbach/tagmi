@@ -25,10 +25,26 @@ class PhotoTagAssignmentForm(forms.Form):
         required=False
     )
 
-    def __init__(self, *args, group=None, **kwargs):
+    def __init__(self, *args, group=None, selected_tags=None, **kwargs):
         super().__init__(*args, **kwargs)
+
         if group:
-            self.fields['tags_to_assign'].queryset = Tag.objects.filter(group=group).order_by('name')
+            all_tags = Tag.objects.filter(group=group)
+            selected_tags = selected_tags or []
+            selected_ids = [tag.id for tag in selected_tags]
+
+            selected = list(all_tags.filter(id__in=selected_ids).order_by('name'))
+            not_selected = list(all_tags.exclude(id__in=selected_ids).order_by('name'))
+            ordered_tags = selected + not_selected
+
+            # ✅ nécessaire pour validation du formulaire
+            self.fields['tags_to_assign'].queryset = all_tags
+
+            # ✅ nécessaire pour l’ordre visuel dans le rendu HTML
+            self.fields['tags_to_assign'].choices = [(tag.pk, str(tag)) for tag in ordered_tags]
+
+            # ✅ pré-sélection des cases cochées
+            self.initial['tags_to_assign'] = selected_ids
 
 class TagFilterForm(forms.Form):
     tags_to_filter_by = forms.ModelMultipleChoiceField(

@@ -47,21 +47,22 @@ class GroupDetailView(LoginRequiredMixin, DetailView):
     context_object_name = 'group'
 
     def get_queryset(self):
-        return super().get_queryset().filter(members=self.request.user)\
-            .prefetch_related(
-                'members',
-                'tags',
-                'photo_tag_associations__photo__uploaded_by',
-                'photo_tag_associations__tags'
-            )
+        return super().get_queryset().filter(members=self.request.user).prefetch_related(
+            'members',
+            'tags',
+            'photo_tag_associations__photo__uploaded_by',
+            'photo_tag_associations__tags'
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         group = self.object
 
+        # Formulaire de filtrage
         filter_form = TagFilterForm(self.request.GET or None, group=group)
         context['filter_form'] = filter_form
 
+        # Associations photo <-> tags
         phototag_associations = group.photo_tag_associations.all()
 
         if filter_form.is_valid():
@@ -71,23 +72,32 @@ class GroupDetailView(LoginRequiredMixin, DetailView):
                     phototag_associations = phototag_associations.filter(tags=tag)
                 phototag_associations = phototag_associations.distinct()
 
+        # Construction des formulaires individuels par photo
         photo_details_list = []
         media_collector = django_forms.Media()
+
         for pt_assoc in phototag_associations:
+            selected_tags = pt_assoc.tags.all()
+
             tag_assignment_form = PhotoTagAssignmentForm(
                 group=group,
-                initial={'tags_to_assign': pt_assoc.tags.all()}
+                selected_tags=selected_tags,
+                initial={'tags_to_assign': selected_tags}
             )
+
             media_collector += tag_assignment_form.media
+
             photo_details_list.append({
                 'photo_tag_association': pt_assoc,
                 'photo': pt_assoc.photo,
-                'current_tags_on_photo': pt_assoc.tags.all(),
+                'current_tags_on_photo': selected_tags,
                 'tag_assignment_form': tag_assignment_form
             })
+
         context['photo_details_list'] = photo_details_list
         context['media'] = media_collector
         return context
+
 
 # Reverted to your original handleMultipleImagesUpload, with improvements
 @login_required

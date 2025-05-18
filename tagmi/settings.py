@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'allauth',
     'allauth.account',
+    'widget_tweaks',
 ]
 
 SITE_ID = 1

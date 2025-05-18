@@ -1,27 +1,21 @@
 {% comment %} core/partials/_photo_card.html {% endcomment %}
 {% load i18n %}
-
+{% load widget_tweaks %}
 <div id="photo-card-{{ detail_item.photo.id }}"
      class="bg-white rounded-lg shadow-lg flex flex-col group relative transition-all duration-300 ease-in-out">
-     {# `group` for hover effects on children, `relative` for z-index context. No overflow-hidden here. #}
-
-  {# Image Container - maintains space, allows image to pop out #}
+  {# Image Container #}
   <div class="h-56 w-full relative">
-    {# The <a> tag is kept for semantics if you want a link eventually, otherwise could be a div #}
-    {# If you have a detail page for the photo, link to: detail_item.photo.get_absolute_url or similar #}
     <img src="{{ detail_item.photo.image.url }}"
-      class="absolute inset-0 w-full h-full object-contain rounded-t-lg
-        transition-all duration-300 ease-in-out
-        hover:scale-150 hover:z-20
-        hover:bg-gray-50
-        hover:rounded-md hover:shadow-2xl"
-      alt="{% blocktranslate with uploader=detail_item.photo.uploaded_by.username %}Photo by {{ uploader }}{% endblocktranslate %}"
-      loading="lazy" />
+         class="absolute inset-0 w-full h-full object-contain rounded-t-lg transition-all duration-300 ease-in-out hover:scale-150 hover:z-20 hover:bg-gray-50 hover:rounded-md hover:shadow-2xl"
+         alt="{% blocktranslate with uploader=detail_item.photo.uploaded_by.username %}Photo by {{ uploader }}{% endblocktranslate %}"
+         loading="lazy" />
   </div>
 
-  <div id="photo-card-body-{{ detail_item.photo.id }}" class="p-4 flex-grow flex flex-col z-0">
-    {# z-0 ensures this content stays below the hovered image which will have a higher z-index #}
-    <div class="mb-3">
+  {# Card Body - Made more compact #}
+  <div id="photo-card-body-{{ detail_item.photo.id }}"
+       class="p-2 flex-grow flex flex-col z-0"> {# Reduced padding from p-4 to p-2 #}
+    
+    <div class="mb-1"> {# Reduced margin-bottom from mb-3 to mb-1 #}
       <p class="text-xs text-gray-500">
         {% blocktranslate with uploader=detail_item.photo.uploaded_by.username date=detail_item.photo.uploaded_at|date:"Y-m-d" %}
           Uploaded by {{ uploader }} on {{ date }}
@@ -29,38 +23,69 @@
       </p>
     </div>
 
-      {# Form to assign/update tags #}
-      <form method="post"
-            action="{% url 'assign_photo_tags' group_pk=group.id photo_pk=detail_item.photo.id %}"
-            class="space-y-2"
-            hx-post="{% url 'assign_photo_tags' group_pk=group.id photo_pk=detail_item.photo.id %}"
-            hx-target="#photo-card-{{ detail_item.photo.id }}"
-            hx-select="#photo-card-{{ detail_item.photo.id }}"
-            hx-swap="outerHTML"
-            hx-select-oob="#messages-container:outerHTML">
-        {% csrf_token %}
-        {{ detail_item.tag_assignment_form.media }}
-        <div>
-            <label for="{{ detail_item.tag_assignment_form.tags_to_assign.id_for_label }}" class="sr-only">{{ detail_item.tag_assignment_form.tags_to_assign.label }}</label>
-            {# This field benefits GREATLY from a widget like django-select2 or django-tomselect #}
-            {# Add Tailwind classes for basic styling if it's a standard select/multiselect #}
-            {# e.g., class="form-multiselect block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" #}
-            {{ detail_item.tag_assignment_form.tags_to_assign }}
-            {% if detail_item.tag_assignment_form.tags_to_assign.errors %}
-                <div class="text-red-500 text-xs mt-1">
-                    {{ detail_item.tag_assignment_form.tags_to_assign.errors|join:", " }}
-                </div>
-            {% endif %}
-        </div>
-        <button type="submit" class="w-full px-3 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150">
-            {% translate "Update Tags" %}
-        </button>
-      </form>
-    </div>
+    {# Form to assign/update tags - now uses flex-grow and flex-col to manage internal space #}
+    <form method="post"
+        id="tag-update-form-{{ detail_item.photo.id }}" {# Added ID for button linkage #}
+        action="{% url 'assign_photo_tags' group_pk=group.id photo_pk=detail_item.photo.id %}"
+        class="space-y-1 flex-grow flex flex-col" {# Reduced space-y, added flex properties #}
+        hx-post="{% url 'assign_photo_tags' group_pk=group.id photo_pk=detail_item.photo.id %}"
+        hx-target="#photo-card-{{ detail_item.photo.id }}"
+        hx-select="#photo-card-{{ detail_item.photo.id }}"
+        hx-swap="outerHTML"
+        hx-select-oob="#messages-container:outerHTML">
+      {% csrf_token %}
+      {{ detail_item.tag_assignment_form.media }}
 
-    {# Actions at the bottom #}
-    <div class="mt-auto pt-3 border-t border-gray-200">
+      {# Tag Search Input - smaller #}
+      <div class="mb-1"> {# Reduced margin-bottom from mb-2 to mb-1 #}
+        <label for="tag-search-{{ detail_item.photo.id }}" class="sr-only">{% translate "Search tags" %}</label>
+        <input type="text"
+               id="tag-search-{{ detail_item.photo.id }}"
+               name="tag_search_{{ detail_item.photo.id }}"
+               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-1 px-2" {# Reduced padding, text-sm #}
+               placeholder="{% translate 'Search tags...' %}"
+               aria-controls="tag-list-{{ detail_item.photo.id }}"
+               data-photo-id="{{ detail_item.photo.id }}">
+      </div>
+
+      {# Container for tag checkboxes - takes remaining space in form #}
+      <div class="flex-grow min-h-0"> {# flex-grow and min-h-0 allows this to expand and push actions down if form is parent #}
+        <label for="{{ detail_item.tag_assignment_form.tags_to_assign.id_for_label }}" class="sr-only">
+          {{ detail_item.tag_assignment_form.tags_to_assign.label }}
+        </label>
+        
+        <div id="tag-list-{{ detail_item.photo.id }}"
+             class="grid grid-cols-1 sm:grid-cols-2 gap-1 max-h-20 h-full overflow-y-auto border border-gray-200 rounded-md p-1"> {# Reduced gap, max-h, padding. Added h-full #}
+          {% for tag_choice in detail_item.tag_assignment_form.tags_to_assign %}
+          <div class="flex items-center space-x-1 px-1 py-0.5 rounded hover:bg-gray-50 tag-item"> {# Reduced space, padding #}
+            {{ tag_choice.tag }}
+            <label for="{{ tag_choice.id_for_label }}" class="text-xs text-gray-700 cursor-pointer tag-label select-none w-full"> {# text-xs for tag label #}
+              {{ tag_choice.choice_label }}
+            </label>
+          </div>
+          {% empty %}
+            <p class="text-xs text-gray-500 col-span-full p-1">{% translate "No tags available for this group." %}</p>
+          {% endfor %}
+        </div>
+        
+        {% if detail_item.tag_assignment_form.tags_to_assign.errors %}
+          <div class="text-red-500 text-xs mt-1">
+            {{ detail_item.tag_assignment_form.tags_to_assign.errors|join:", " }}
+          </div>
+        {% endif %}
+      </div>
+      {# The "Update Tags" button is now outside this form, linked by its 'form' attribute #}
+    </form> {# End of tag-update-form #}
+
+    {# Actions Area - at the bottom of photo-card-body, mt-auto pushes it down #}
+    <div class="mt-auto pt-2 flex items-center space-x-2"> {# mt-auto is key, pt-2 for spacing from content above #}
+      <button type="submit" form="tag-update-form-{{ detail_item.photo.id }}" {# Linked to the form above #}
+              class="flex-grow px-2 py-1 bg-indigo-600 text-white text-xs font-semibold rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150">
+        {% translate "Update Tags" %}
+      </button>
+
       <form method="post"
+            class="flex-shrink-0" {# Prevents this form/button from growing #}
             action="{% url 'remove_photo_from_group' group_pk=group.id photo_pk=detail_item.photo.id %}"
             hx-post="{% url 'remove_photo_from_group' group_pk=group.id photo_pk=detail_item.photo.id %}"
             hx-target="#group-photos-section"
@@ -69,10 +94,13 @@
             hx-select-oob="#messages-container:outerHTML"
             hx-confirm="{% blocktranslate %}Are you sure you want to remove this photo from the group?{% endblocktranslate %}">
         {% csrf_token %}
-        <button type="submit" class="w-full px-3 py-2 bg-red-500 text-white text-sm font-semibold rounded-md shadow-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition duration-150" title="{% translate 'Remove photo from group' %}">
-          {% translate "Remove from Group" %}
+        <button type="submit"
+                class="px-2 py-1 bg-red-500 text-white text-xs font-semibold rounded-md shadow-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition duration-150"
+                title="{% translate 'Remove photo from group' %}">
+            {% translate "Remove" %} {# Shorter button text #}
         </button>
       </form>
     </div>
-  </div>
+  </div> {# End of photo-card-body #}
+  {# The old separate div for the remove button is now removed from here #}
 </div>
