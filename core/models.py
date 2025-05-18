@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-# from cloudinary.models import CloudinaryField
+from cloudinary.models import CloudinaryField
 
 class Group(models.Model):
     name = models.CharField(_("group name"), max_length=255)
@@ -27,8 +27,8 @@ class Group(models.Model):
 
 class Photo(models.Model):
     # In production, use CloudinaryField for image storage
-    # image = CloudinaryField('image')
-    image = models.ImageField(_("image"), upload_to="photos/%Y/%m/%d/")
+    image = CloudinaryField('image')
+    # image = models.ImageField(_("image"), upload_to="photos/%Y/%m/%d/")
     uploaded_by = models.ForeignKey(
         User,
         verbose_name=_("uploader"),
